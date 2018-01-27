@@ -109,23 +109,28 @@ class Blockchain( object ):
     def clear_transactions(self):
         self.current_transactions = []
 
-    def verify_transactions(self):
+    def verify_transactions(self, block=-1 ):
         # Check if transactions are allowed
+        if -1 == block:
+            transactions_to_verify = self.current_transactions
+        else :
+            transactions_to_verify = self.blockchain[block]['transactions']
+
         account_balances = {}
         transactions_verified = []
-        for transaction in self.current_transactions:
+        for transaction in transactions_to_verify:
             sender = transaction['sender']
             receiver = transaction['receiver']
             amount = transaction['amount']
 
             if sender not in account_balances:
-                account_balances[sender] = self.balance( sender )
+                account_balances[sender] = self.balance( sender, block )
 
             # If transaction is OK then it will be added to the block
             if account_balances[sender] >= amount:
                 account_balances[sender] -= amount
                 if receiver not in account_balances:
-                    account_balances[receiver] = self.balance( sender )
+                    account_balances[receiver] = self.balance( sender, block )
                 account_balances[receiver] += amount
                 transactions_verified.append( transaction )
         self.current_transactions = transactions_verified
