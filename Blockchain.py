@@ -1,4 +1,21 @@
+from Functions import *
+import json
 
+
+class Blockchain( object ):
+    def __init__(self):
+        self.current_transactions = []
+        block = {
+            'index': 0,
+            'timestamp': timestamp(),
+            'transactions': [],
+            'nonce': 0,
+            'previous_block_hash': 0,
+        }
+        self.blockchain = [block]
+        pass
+
+    def mine(self, miner_address):
         """Create a new block"""
 
         coinbase = [{
