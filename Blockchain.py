@@ -2,9 +2,13 @@ from Functions import *
 
 
 class Blockchain( object ):
-    def __init__(self):
-        self.difficulty = 0
-        self.coinbase = 1000
+    def __init__(self, difficulty = 0, coinbase = 1000):
+        """
+        Difficulty define how time consuming will be the PoW
+        Coinbase is the amount that will be given to the miner as a reward for his work
+        """
+        self.difficulty = difficulty
+        self.coinbase = coinbase
 
         nonce = 0
         while True:
@@ -23,18 +27,20 @@ class Blockchain( object ):
         self.current_transactions = []
 
     def mine(self, miner_address):
-        """Create a new block"""
+        """
+        Create a new block
+        """
 
         # Verify the transactions
         self.verify_transactions()
 
         # Reward the miner
-        coinbase = {
+        coinbase_transaction = {
             'sender': -1,
             'receiver': miner_address,
             'amount': self.coinbase,
         }
-        transactions_verified = [coinbase] + self.current_transactions
+        transactions_verified = [coinbase_transaction] + self.current_transactions
 
         # Find a nonce that verify the Proof of Work
         nonce = 0
@@ -59,7 +65,9 @@ class Blockchain( object ):
         return block
 
     def transfer(self, sender_address, receiver_address, amount):
-        """Create a new transaction"""
+        """
+        Create a new transaction
+        """
         self.current_transactions.append( {
             'sender': sender_address,
             'receiver': receiver_address,
@@ -68,6 +76,14 @@ class Blockchain( object ):
         return self.current_transactions
 
     def balance(self, address, block_number=-1):
+        """
+        Get the balance of an account
+        If a block number is specified the balance will be given at the time of the block #block_number
+        If not the balance will be given at the time of the last block
+        :param address:
+        :param block_number:
+        :return:
+        """
         if block_number == -1:
             block_number = len( self.blockchain )
         else:
@@ -87,6 +103,11 @@ class Blockchain( object ):
         return balance
 
     def all_balances(self, block_number=-1):
+        """
+        Get all balances
+        :param block_number:
+        :return:
+        """
         if block_number == -1:
             block_number = len( self.blockchain )
         else:
@@ -111,9 +132,19 @@ class Blockchain( object ):
         return account_balances
 
     def clear_transactions(self):
+        """
+        Delete all pending transactions
+        :return:
+        """
         self.current_transactions = []
 
     def verify_transactions(self, block=-1, clear_current_tx = True ):
+        """
+        Verify that all transactions are valid i.e. that they have enough balance to pay
+        :param block:
+        :param clear_current_tx:
+        :return:
+        """
         # Check if transactions are allowed
         if -1 == block:
             transactions_to_verify = self.current_transactions
@@ -147,6 +178,10 @@ class Blockchain( object ):
         return false_tx
 
     def verify_chain(self):
+        """
+        Verify block chain integrity through verification of transaction and block hashes
+        :return:
+        """
         first_block = self.blockchain[0]
         first_block_tx = first_block['transactions']
 
@@ -167,10 +202,17 @@ class Blockchain( object ):
 
     @property
     def last_block(self):
-        """Last block"""
+        """
+        Last block
+        :return:
+        """
         return self.blockchain[-1]
 
     @property
     def last_block_hash(self):
+        """
+        Last block hash
+        :return:
+        """
         block = self.last_block
         return block_hash( block )
