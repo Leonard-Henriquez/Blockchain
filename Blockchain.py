@@ -4,7 +4,6 @@ import json
 
 class Blockchain( object ):
     def __init__(self):
-        self.current_transactions = []
         block = {
             'index': 0,
             'timestamp': timestamp(),
@@ -13,39 +12,27 @@ class Blockchain( object ):
             'previous_block_hash': 0,
         }
         self.blockchain = [block]
-        pass
+        self.current_transactions = []
+        self.difficulty = 1
 
     def mine(self, miner_address):
         """Create a new block"""
 
+        # Verify the transactions
+        self.verify_transactions()
+
+        # Reward the miner
         coinbase = {
             'sender': -1,
             'receiver': miner_address,
             'amount': 1000,
         }
-        transactions_verified = [coinbase]
+        transactions_verified = [coinbase] + self.current_transactions
 
-        # validate transactions
+        # Find a nonce that verify the Proof of Work
 
-        account_balances = {}
-        for transaction in self.current_transactions:
-            sender = transaction['sender']
-            receiver = transaction['receiver']
-            amount = transaction['amount']
 
-            if sender not in account_balances:
-                account_balances[sender] = self.check_balance( sender )
-
-            if account_balances[sender] >= amount:
-                account_balances[sender] -= amount
-                if receiver not in account_balances:
-                    account_balances[receiver] = self.check_balance( sender )
-                account_balances[receiver] += amount
-                transactions_verified.append( transaction )
-
-        # find nonce with Proof of Work
-
-        # propose new block to the blockchain
+        # Propose new block to the blockchain
         nonce = 0
         block = {
             'index': len( self.blockchain ),
@@ -86,6 +73,27 @@ class Blockchain( object ):
         for amount in amounts():
             balance += amount
         return balance
+
+    def verify_transactions(self):
+        # Check if transactions are allowed
+        account_balances = {}
+        transactions_verified = []
+        for transaction in self.current_transactions:
+            sender = transaction['sender']
+            receiver = transaction['receiver']
+            amount = transaction['amount']
+
+            if sender not in account_balances:
+                account_balances[sender] = self.check_balance( sender )
+
+            # If transaction is OK then it will be added to the block
+            if account_balances[sender] >= amount:
+                account_balances[sender] -= amount
+                if receiver not in account_balances:
+                    account_balances[receiver] = self.check_balance( sender )
+                account_balances[receiver] += amount
+                transactions_verified.append( transaction )
+        self.current_transactions = transactions_verified
 
     @property
     def last_block(self):
