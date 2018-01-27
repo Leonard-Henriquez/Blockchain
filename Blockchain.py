@@ -18,15 +18,30 @@ class Blockchain( object ):
     def mine(self, miner_address):
         """Create a new block"""
 
-        coinbase = [{
+        coinbase = {
             'sender': -1,
             'receiver': miner_address,
             'amount': 1000,
-        }]
+        }
+        transactions_verified = [coinbase]
 
         # validate transactions
 
-        transactions = coinbase + self.current_transactions
+        account_balances = {}
+        for transaction in self.current_transactions:
+            sender = transaction['sender']
+            receiver = transaction['receiver']
+            amount = transaction['amount']
+
+            if sender not in account_balances:
+                account_balances[sender] = self.check_balance( sender )
+
+            if account_balances[sender] >= amount:
+                account_balances[sender] -= amount
+                if receiver not in account_balances:
+                    account_balances[receiver] = self.check_balance( sender )
+                account_balances[receiver] += amount
+                transactions_verified.append( transaction )
 
         # find nonce with Proof of Work
 
@@ -35,12 +50,13 @@ class Blockchain( object ):
         block = {
             'index': len( self.blockchain ),
             'timestamp': timestamp(),
-            'transactions': transactions,
+            'transactions': transactions_verified,
             'nonce': nonce,
             'previous_block_hash': self.last_block_hash,
         }
         self.blockchain.append( block )
         self.current_transactions = []
+        print( self.last_block )
         return block
 
     def transfer(self, sender_address, receiver_address, amount):
@@ -52,9 +68,14 @@ class Blockchain( object ):
         } )
         return self.current_transactions
 
-    def check_balance(self, address):
+    def check_balance(self, address, block_number=-1):
+        if block_number == -1:
+            block_number = len( self.blockchain )
+        else:
+            block_number += 1
+
         def amounts():
-            for block in self.blockchain:
+            for block in self.blockchain[0:block_number]:
                 for transaction in block['transactions']:
                     if transaction['receiver'] == address:
                         yield transaction['amount']
