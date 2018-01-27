@@ -40,6 +40,7 @@ class Blockchain( object ):
             'previous_block_hash': self.last_block_hash,
         }
         self.blockchain.append( block )
+        self.current_transactions = []
         return block
 
     def transfer(self, sender_address, receiver_address, amount):
@@ -50,6 +51,20 @@ class Blockchain( object ):
             'amount': amount,
         } )
         return self.current_transactions
+
+    def check_balance(self, address):
+        def amounts():
+            for block in self.blockchain:
+                for transaction in block['transactions']:
+                    if transaction['receiver'] == address:
+                        yield transaction['amount']
+                    elif transaction['sender'] == address:
+                        yield -transaction['amount']
+
+        balance = 0
+        for amount in amounts():
+            balance += amount
+        return balance
 
     @property
     def last_block(self):
