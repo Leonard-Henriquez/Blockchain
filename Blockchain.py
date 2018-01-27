@@ -50,7 +50,7 @@ class Blockchain( object ):
 
         # Propose new block to the blockchain
         self.blockchain.append( block )
-        self.current_transactions = []
+        self.clear_transactions()
         print( self.last_block )
         return block
 
@@ -63,7 +63,7 @@ class Blockchain( object ):
         } )
         return self.current_transactions
 
-    def check_balance(self, address, block_number=-1):
+    def balance(self, address, block_number=-1):
         if block_number == -1:
             block_number = len( self.blockchain )
         else:
@@ -82,6 +82,9 @@ class Blockchain( object ):
             balance += amount
         return balance
 
+    def clear_transactions(self):
+        self.current_transactions = []
+
     def verify_transactions(self):
         # Check if transactions are allowed
         account_balances = {}
@@ -92,13 +95,13 @@ class Blockchain( object ):
             amount = transaction['amount']
 
             if sender not in account_balances:
-                account_balances[sender] = self.check_balance( sender )
+                account_balances[sender] = self.balance( sender )
 
             # If transaction is OK then it will be added to the block
             if account_balances[sender] >= amount:
                 account_balances[sender] -= amount
                 if receiver not in account_balances:
-                    account_balances[receiver] = self.check_balance( sender )
+                    account_balances[receiver] = self.balance( sender )
                 account_balances[receiver] += amount
                 transactions_verified.append( transaction )
         self.current_transactions = transactions_verified
