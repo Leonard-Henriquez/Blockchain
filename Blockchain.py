@@ -1,19 +1,24 @@
 from Functions import *
-import json
 
 
 class Blockchain( object ):
     def __init__(self):
-        block = {
-            'index': 0,
-            'timestamp': timestamp(),
-            'transactions': [],
-            'nonce': 0,
-            'previous_block_hash': 0,
-        }
+        self.difficulty = 1
+        nonce = 0
+        while True:
+            block = {
+                'index': 0,
+                'timestamp': timestamp(),
+                'transactions': [],
+                'nonce': nonce,
+                'previous_block_hash': 0,
+            }
+            hash = block_hash(block)
+            if hash[:self.difficulty] == '0' * self.difficulty:
+                break
+
         self.blockchain = [block]
         self.current_transactions = []
-        self.difficulty = 1
 
     def mine(self, miner_address):
         """Create a new block"""
@@ -30,17 +35,20 @@ class Blockchain( object ):
         transactions_verified = [coinbase] + self.current_transactions
 
         # Find a nonce that verify the Proof of Work
-
+        nonce = 0
+        while True:
+            block = {
+                'index': len( self.blockchain ),
+                'timestamp': timestamp(),
+                'transactions': transactions_verified,
+                'nonce': nonce,
+                'previous_block_hash': self.last_block_hash,
+            }
+            hash = block_hash(block)
+            if hash[:self.difficulty] == '0' * self.difficulty:
+                break
 
         # Propose new block to the blockchain
-        nonce = 0
-        block = {
-            'index': len( self.blockchain ),
-            'timestamp': timestamp(),
-            'transactions': transactions_verified,
-            'nonce': nonce,
-            'previous_block_hash': self.last_block_hash,
-        }
         self.blockchain.append( block )
         self.current_transactions = []
         print( self.last_block )
@@ -103,5 +111,4 @@ class Blockchain( object ):
     @property
     def last_block_hash(self):
         block = self.last_block
-        block_string = json.dumps( block, sort_keys=True ).encode()
-        return hash( block_string )
+        return block_hash( block )
