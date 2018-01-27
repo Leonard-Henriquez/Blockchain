@@ -3,7 +3,9 @@ from Functions import *
 
 class Blockchain( object ):
     def __init__(self):
-        self.difficulty = 1
+        self.difficulty = 0
+        self.coinbase = 1000
+
         nonce = 0
         while True:
             block = {
@@ -30,7 +32,7 @@ class Blockchain( object ):
         coinbase = {
             'sender': -1,
             'receiver': miner_address,
-            'amount': 1000,
+            'amount': self.coinbase,
         }
         transactions_verified = [coinbase] + self.current_transactions
 
@@ -52,6 +54,8 @@ class Blockchain( object ):
         self.blockchain.append( block )
         self.clear_transactions()
         print( self.last_block )
+        print( self.verify_chain())
+        print( self.last_block_hash)
         return block
 
     def transfer(self, sender_address, receiver_address, amount):
@@ -109,7 +113,7 @@ class Blockchain( object ):
     def clear_transactions(self):
         self.current_transactions = []
 
-    def verify_transactions(self, block=-1 ):
+    def verify_transactions(self, block=-1, clear_current_tx = True ):
         # Check if transactions are allowed
         if -1 == block:
             transactions_to_verify = self.current_transactions
@@ -118,6 +122,7 @@ class Blockchain( object ):
 
         account_balances = {}
         transactions_verified = []
+        false_tx = False
         for transaction in transactions_to_verify:
             sender = transaction['sender']
             receiver = transaction['receiver']
@@ -133,7 +138,32 @@ class Blockchain( object ):
                     account_balances[receiver] = self.balance( sender, block )
                 account_balances[receiver] += amount
                 transactions_verified.append( transaction )
-        self.current_transactions = transactions_verified
+            elif sender != -1:
+                false_tx = True
+
+        if clear_current_tx:
+            self.current_transactions = transactions_verified
+
+        return false_tx
+
+    def verify_chain(self):
+        first_block = self.blockchain[0]
+        first_block_tx = first_block['transactions']
+
+        false_tx = False
+        if len(first_block_tx) > 0:
+            amount = first_block_tx[0]['amount']
+            if len( first_block_tx ) > 1 or amount > self.coinbase:
+                false_tx = True
+
+        previous_block_hash = block_hash(first_block)
+        for i, block in enumerate(self.blockchain[1:-1]):
+            if self.verify_transactions(i, False):
+                false_tx = True
+            if block['previous_block_hash'] != previous_block_hash:
+                false_tx = True
+            previous_block_hash = block_hash(block)
+        return false_tx
 
     @property
     def last_block(self):
