@@ -82,6 +82,30 @@ class Blockchain( object ):
             balance += amount
         return balance
 
+    def all_balances(self, block_number=-1):
+        if block_number == -1:
+            block_number = len( self.blockchain )
+        else:
+            block_number += 1
+
+        account_balances = {}
+        for block in self.blockchain[0:block_number]:
+            for transaction in block['transactions']:
+                sender = transaction['sender']
+                receiver = transaction['receiver']
+                amount = transaction['amount']
+
+                if sender not in account_balances:
+                    account_balances[sender] = - amount
+                else:
+                    account_balances[sender] -= amount
+
+                if receiver not in account_balances:
+                    account_balances[receiver] = amount
+                else:
+                    account_balances[receiver] += amount
+        return account_balances
+
     def clear_transactions(self):
         self.current_transactions = []
 
